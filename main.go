@@ -7,13 +7,27 @@ import (
 )
 
 func main() {
-	fmt.Println("------------ GENERATE API EXAMPLE ------------")
+	currentModule := 2
 
-	modules.GenerateApiExample("what is TLS?")
-	modules.GenerateApiExample("Can you elaborate it?")
+	if currentModule == 1 {
+		fmt.Println("------------ GENERATE API EXAMPLE ------------")
 
-	fmt.Println("------------ CHAT API EXAMPLE ------------")
+		modules.GenerateApiExample("what is TLS?")
+		modules.GenerateApiExample("Can you elaborate it?")
 
-	modules.ChatApiExample("what is TLS?")
-	modules.ChatApiExample("Can you elaborate it?")
+		fmt.Println("------------ CHAT API EXAMPLE ------------")
+
+		modules.ChatApiExample("what is TLS?")
+		modules.ChatApiExample("Can you elaborate it?")
+	}
+
+	if currentModule == 2 {
+		fmt.Println("------------ CHAT STREAM API EXAMPLE ------------")
+
+		fmt.Println("1/2 -- What is TLS?")
+		modules.ChatStreamApiExample("what is TLS?")
+
+		fmt.Println("2/2 -- Can you elaborate it?")
+		modules.ChatStreamApiExample("Can you elaborate it?")
+	}
 }

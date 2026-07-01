@@ -6,13 +6,9 @@ import (
 	"github.com/devakxhay/ollama-playground/internal/ollama"
 )
 
-const ollamaUrl = "http://localhost:11434"
-const model = "gemma3:270m"
-
 func GenerateApiExample(prompt string) {
-	oc := ollama.NewOllamaClient(ollamaUrl + "/api/generate")
 
-	content, _ := oc.Generate(model, prompt)
+	content, _ := ollama.OC.Generate(ollama.Model, prompt)
 
 	fmt.Printf("Response From Ollama: %s\n", content)
 }
@@ -20,14 +16,13 @@ func GenerateApiExample(prompt string) {
 var messages = []ollama.Message{}
 
 func ChatApiExample(message string) {
-	oc := ollama.NewOllamaClient(ollamaUrl + "/api/chat")
 
 	messages = append(messages, ollama.Message{
 		Role:    "user",
 		Content: message,
 	})
 
-	content, _ := oc.Chat(model, messages)
+	content, _ := ollama.OC.Chat(ollama.Model, messages)
 
 	fmt.Printf("Response From Ollama: %s\n", content)
 

@@ -1,6 +1,7 @@
 package ollama
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
@@ -63,7 +64,7 @@ func (o *OllamaClient) Generate(model string, prompt string) (string, error) {
 
 	httpClient := &http.Client{Transport: tr}
 
-	resp, err := httpClient.Post(o.URL, "application/json", bytes.NewReader(jb))
+	resp, err := httpClient.Post(o.URL+"/api/generate", "application/json", bytes.NewReader(jb))
 	if err != nil {
 		return "", err
 	}
@@ -106,7 +107,7 @@ func (o *OllamaClient) Chat(model string, messages []Message) (string, error) {
 
 	httpClient := &http.Client{Transport: tr}
 
-	resp, err := httpClient.Post(o.URL, "application/json", bytes.NewReader(jb))
+	resp, err := httpClient.Post(o.URL+"/api/chat", "application/json", bytes.NewReader(jb))
 	if err != nil {
 		return "", err
 	}
@@ -129,4 +130,50 @@ func (o *OllamaClient) Chat(model string, messages []Message) (string, error) {
 	}
 
 	return chatResponse.Message.Content, nil
+}
+
+func (o *OllamaClient) ChatStream(model string, messages []Message) (<-chan string, <-chan error, error) {
+	reqBody := ChatRequest{
+		Model:    model,
+		Messages: messages,
+		Stream:   true,
+	}
+
+	jb, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	httpClient := &http.Client{Transport: tr}
+
+	resp, err := httpClient.Post(o.URL+"/api/chat", "application/json", bytes.NewReader(jb))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	out := make(chan string)
+	errCh := make(chan error, 1)
+
+	go func() {
+		defer resp.Body.Close()
+		defer close(out)
+		defer close(errCh)
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			var chunk ChatResponse
+			if err := json.Unmarshal(scanner.Bytes(), &chunk); err != nil {
+				continue
+			}
+			out <- chunk.Message.Content
+		}
+		if err := scanner.Err(); err != nil {
+			errCh <- err
+		}
+	}()
+
+	return out, errCh, nil
 }

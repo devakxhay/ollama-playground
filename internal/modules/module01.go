@@ -22,7 +22,7 @@ func ChatApiExample(message string) {
 		Content: message,
 	})
 
-	content, _ := ollama.OC.Chat(ollama.Model, messages)
+	content, _ := ollama.OC.Chat(ollama.Model, messages, nil)
 
 	fmt.Printf("Response From Ollama: %s\n", content)
 

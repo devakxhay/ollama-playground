@@ -24,9 +24,10 @@ type GenerateResponse struct {
 }
 
 type ChatRequest struct {
-	Model    string    `json:"model"`
-	Messages []Message `json:"messages"`
-	Stream   bool      `json:"stream"`
+	Model    string         `json:"model"`
+	Messages []Message      `json:"messages"`
+	Options  map[string]any `json:"options,omitempty"`
+	Stream   bool           `json:"stream"`
 }
 
 type ChatResponse struct {
@@ -91,25 +92,8 @@ func (o *OllamaClient) Generate(model string, prompt string) (string, error) {
 	return generateRes.Response, nil
 }
 
-func (o *OllamaClient) Chat(model string, messages []Message) (string, error) {
-	reqBody := ChatRequest{
-		Model:    model,
-		Messages: messages,
-		Stream:   false,
-	}
-
-	jb, err := json.Marshal(reqBody)
-	if err != nil {
-		return "", err
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	httpClient := &http.Client{Transport: tr}
-
-	resp, err := httpClient.Post(o.URL+"/api/chat", "application/json", bytes.NewReader(jb))
+func (o *OllamaClient) Chat(model string, messages []Message, options map[string]any) (string, error) {
+	resp, err := postChat(o.URL+"/api/chat", model, messages, options, false)
 	if err != nil {
 		return "", err
 	}
@@ -135,24 +119,7 @@ func (o *OllamaClient) Chat(model string, messages []Message) (string, error) {
 }
 
 func (o *OllamaClient) ChatStream(model string, messages []Message) (<-chan string, <-chan error, error) {
-	reqBody := ChatRequest{
-		Model:    model,
-		Messages: messages,
-		Stream:   true,
-	}
-
-	jb, err := json.Marshal(reqBody)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	httpClient := &http.Client{Transport: tr}
-
-	resp, err := httpClient.Post(o.URL+"/api/chat", "application/json", bytes.NewReader(jb))
+	resp, err := postChat(o.URL+"/api/chat", model, messages, nil, true)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -229,4 +196,10 @@ func (o *OllamaClient) GenerateJsonResponse(model string, prompt string) (<-chan
 	}()
 
 	return out, errCh, nil
+}
+
+func (o *OllamaClient) ChatSystemRole(model string, messages []Message) (string, error) {
+	return o.Chat(model, messages, map[string]any{
+		"temperature": 0.0,
+	})
 }

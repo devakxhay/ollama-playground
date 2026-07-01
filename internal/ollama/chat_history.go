@@ -4,6 +4,13 @@ type ChatHistory struct {
 	messages []Message
 }
 
+func (c *ChatHistory) AppendSystemMessage(role string) {
+	c.addMessage(Message{
+		Role:    "system",
+		Content: role,
+	})
+}
+
 func NewChatHistory() *ChatHistory {
 	return &ChatHistory{
 		messages: []Message{},

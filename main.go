@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	currentModule := 3
+	currentModule := 4
 
 	if currentModule == 1 {
 		fmt.Println("------------ GENERATE API EXAMPLE ------------")
@@ -36,5 +36,13 @@ func main() {
 		modules.GenerateJsonResponseExample("Analyse the text: Book the flight to New Delhi for 2 people on 24th of December. Return the JSON object with the following keys: departure, destination, number_of_passengers, flight_date")
 
 		modules.GenerateJsonResponseExample("Analyse the text: I spend 200rs on food. Return the JSON object with the following keys: amount,currency,expense_type")
+	}
+
+	if currentModule == 4 {
+		fmt.Println("------------ SYSTEM ROLE EXAMPLE ------------")
+		modules.InitChat("You are a database query designer. Return only raw SQL queries.")
+
+		modules.SystemRoleExample("Show me the list of all users.")
+		modules.SystemRoleExample("Top 5 users having most followers.")
 	}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	currentModule := 2
+	currentModule := 3
 
 	if currentModule == 1 {
 		fmt.Println("------------ GENERATE API EXAMPLE ------------")
@@ -29,5 +29,12 @@ func main() {
 
 		fmt.Println("2/2 -- Can you elaborate it?")
 		modules.ChatStreamApiExample("Can you elaborate it?")
+	}
+
+	if currentModule == 3 {
+		fmt.Println("------------ CHAT JSON RESPONSE API EXAMPLE ------------")
+		modules.GenerateJsonResponseExample("Analyse the text: Book the flight to New Delhi for 2 people on 24th of December. Return the JSON object with the following keys: departure, destination, number_of_passengers, flight_date")
+
+		modules.GenerateJsonResponseExample("Analyse the text: I spend 200rs on food. Return the JSON object with the following keys: amount,currency,expense_type")
 	}
 }

@@ -11,9 +11,11 @@ import (
 )
 
 type GenerateRequest struct {
-	Model  string `json:"model"`
-	Prompt string `json:"prompt"`
-	Stream bool   `json:"stream"`
+	Model   string         `json:"model"`
+	Prompt  string         `json:"prompt"`
+	Stream  bool           `json:"stream"`
+	Format  string         `json:"format,omitempty"`
+	Options map[string]any `json:"options,omitempty"`
 }
 
 type GenerateResponse struct {
@@ -169,6 +171,57 @@ func (o *OllamaClient) ChatStream(model string, messages []Message) (<-chan stri
 				continue
 			}
 			out <- chunk.Message.Content
+		}
+		if err := scanner.Err(); err != nil {
+			errCh <- err
+		}
+	}()
+
+	return out, errCh, nil
+}
+
+func (o *OllamaClient) GenerateJsonResponse(model string, prompt string) (<-chan string, <-chan error, error) {
+	reqBody := GenerateRequest{
+		Model:  model,
+		Prompt: prompt,
+		Stream: true,
+		Format: "json",
+		Options: map[string]any{
+			"temperature": 0.0,
+		},
+	}
+
+	jb, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	httpClient := &http.Client{Transport: tr}
+
+	resp, err := httpClient.Post(o.URL+"/api/generate", "application/json", bytes.NewReader(jb))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	out := make(chan string)
+	errCh := make(chan error, 1)
+
+	go func() {
+		defer resp.Body.Close()
+		defer close(out)
+		defer close(errCh)
+
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			var chunk GenerateResponse
+			if err := json.Unmarshal(scanner.Bytes(), &chunk); err != nil {
+				continue
+			}
+			out <- chunk.Response
 		}
 		if err := scanner.Err(); err != nil {
 			errCh <- err
